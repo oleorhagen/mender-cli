@@ -60,7 +60,7 @@ func getDefaultAuthTokenPath() (string, error) {
 	} else if user, err := user.Current(); err == nil {
 		userhomedir = user.HomeDir
 	} else {
-		return "", errors.New("Not able to determine users cache dir")
+		return "", errors.New("Not able to determine users cache dir. Is the '$HOME', and '$USER' variable a part of the running program environment?")
 	}
 
 	if cachehomeenv := os.Getenv("XDG_CACHE_HOME"); cachehomeenv != "" {
