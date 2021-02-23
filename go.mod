@@ -10,7 +10,7 @@ require (
 	github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
-	github.com/mendersoftware/go-lib-micro v0.0.0-20210108082129-a99629450795
+	github.com/mendersoftware/go-lib-micro v0.0.0-20210219095151-13466b5958fb
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/errors v0.9.1
