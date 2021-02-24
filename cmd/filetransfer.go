@@ -27,6 +27,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/mendersoftware/go-lib-micro/ws"
@@ -71,9 +72,9 @@ type NewFileTransferCmd struct {
 
 // NewFileTransferCmd returns a new NewFileTransferCmd
 func NewFileTransfer(cmd *cobra.Command, args []string) (*NewFileTransferCmd, error) {
-	server, err := cmd.Flags().GetString(argRootServer)
-	if err != nil {
-		return nil, err
+	server := viper.GetString(argRootServer)
+	if server == "" {
+		return nil, errors.New("Empty server value. This should never happen")
 	}
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
