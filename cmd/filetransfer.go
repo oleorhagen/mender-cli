@@ -199,7 +199,7 @@ func (c *NewFileTransferCmd) Run() error {
 	m = &ws.ProtoMsg{}
 	err = msgpack.Unmarshal(data, m)
 	if err != nil {
-		log.Err(fmt.Sprintf("error unmarshalling StatFIle response message: %v", err))
+		log.Err(fmt.Sprintf("error unmarshalling StatFile response message: %v", err))
 		return nil
 	}
 
