@@ -57,36 +57,39 @@ def clean_devauth_db():
     assert r.returncode == 0, r.stderr
 
 
+@pytest.fixture
+def running_device_id(logged_in_single_user):
+    authset = crypto.rand_id_data()
+    keypair = crypto.get_keypair_rsa()
+    dapi = api.DevicesDevauth()
+    r = dapi.post_auth_request(authset, keypair[1], keypair[0])
+    assert r.status_code == 401
+
+    # Get and accept the device
+    token = Path(DEFAULT_TOKEN_PATH).read_text()
+    mapi = api.ManagementDevauth(token)
+    r = mapi.get_devices()
+    assert r.status_code == 200
+    devices = r.json()
+    device_id = devices[0]["id"]
+    authset_id = devices[0]["auth_sets"][0]["id"]
+    r = mapi.set_device_auth_status(device_id, authset_id, "accepted")
+    assert r.status_code == 204
+
+    # Device should now be listed as accepted
+    c = cli.Cli()
+    r = c.run(
+        "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
+    )
+    assert r.returncode == 0, r.stderr
+    expect_output(r.stdout, "Status: accepted")
+
+    return device_id
+
+
 @pytest.mark.usefixtures("clean_devauth_db")
 class TestFiletransfer:
-    def test_download(self, logged_in_single_user):
-        # TODO - Factor out as a fixture
-        # Create a device
-        authset = crypto.rand_id_data()
-        keypair = crypto.get_keypair_rsa()
-        dapi = api.DevicesDevauth()
-        r = dapi.post_auth_request(authset, keypair[1], keypair[0])
-        assert r.status_code == 401
-
-        # Get and accept the device
-        token = Path(DEFAULT_TOKEN_PATH).read_text()
-        mapi = api.ManagementDevauth(token)
-        r = mapi.get_devices()
-        assert r.status_code == 200
-        devices = r.json()
-        device_id = devices[0]["id"]
-        authset_id = devices[0]["auth_sets"][0]["id"]
-        r = mapi.set_device_auth_status(device_id, authset_id, "accepted")
-        assert r.status_code == 204
-
-        # Device should now be listed as accepted
-        c = cli.Cli()
-        r = c.run(
-            "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
-        )
-        assert r.returncode == 0, r.stderr
-        expect_output(r.stdout, "Status: accepted")
-
+    def test_download(self, device_id=running_device_id):
         c = cli.MenderCliCoverage()
         r = c.run(
             "--server",
@@ -97,37 +100,10 @@ class TestFiletransfer:
             "./mender.conf",
         )
         assert r.returncode == 0, r.stderr
-
         assert r.stdout
 
-    def test_upload(self, logged_in_single_user):
-        # TODO - Factor out as a fixture
-        # Create a device
-        authset = crypto.rand_id_data()
-        keypair = crypto.get_keypair_rsa()
-        dapi = api.DevicesDevauth()
-        r = dapi.post_auth_request(authset, keypair[1], keypair[0])
-        assert r.status_code == 401
-
-        # Get and accept the device
-        token = Path(DEFAULT_TOKEN_PATH).read_text()
-        mapi = api.ManagementDevauth(token)
-        r = mapi.get_devices()
-        assert r.status_code == 200
-        devices = r.json()
-        device_id = devices[0]["id"]
-        authset_id = devices[0]["auth_sets"][0]["id"]
-        r = mapi.set_device_auth_status(device_id, authset_id, "accepted")
-        assert r.status_code == 204
-
-        # Device should now be listed as accepted
-        c = cli.Cli()
-        r = c.run(
-            "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
-        )
-        assert r.returncode == 0, r.stderr
-        expect_output(r.stdout, "Status: accepted")
-
+    def test_upload(self, device_id=running_device_id):
+        # Create a dummy file to upload
         with open("./mender.conf.new") as f:
             f.write("foobarbaz")
         c = cli.MenderCliCoverage()
